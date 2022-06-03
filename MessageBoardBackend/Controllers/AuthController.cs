@@ -15,12 +15,12 @@ namespace MessageBoardBackend.Controllers
     {
         public static User user = new User();
 
-        private readonly DataContext _context;
+        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
 
-        public AuthController(DataContext context, IConfiguration configuration)
+        public AuthController(IUserService userService, IConfiguration configuration)
         {
-            _context = context;
+            _userService = userService;
             _configuration = configuration;
         }
 
@@ -35,15 +35,15 @@ namespace MessageBoardBackend.Controllers
                 return BadRequest("missing fields");
             }
            
-            if (await getUserByUsername(username) != null)
+            if (await _userService.GetUserByUsername(username) != null)
             {
                 return BadRequest("username exists");
             }
-            if (checkEmailValid(email) == false)
+            if (_userService.ValidateEmail(email) == false)
             {
                 return BadRequest("invalid email");
             }
-            if (await getUserByEmail(username) != null)
+            if (await _userService.GetUserByEmail(email) != null)
             {
                 return BadRequest("email exists");
             }
@@ -56,33 +56,43 @@ namespace MessageBoardBackend.Controllers
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
            
-            user.RoleId = GetRoleId();
+            user.RoleId = await _userService.GetRoleId();
 
-            _context.User.Add(user);
-            await _context.SaveChangesAsync();
-            return Ok(user);
-
+            if (await _userService.AddUser(user))
+            {
+                return Ok(user);
+            }
+            return BadRequest("User registration failed");
+            
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserDto request)
         {
             //find user by username, maybe email also
-            var loginUser = await getUserByUsername(request.Username);
+            var loginUser = await _userService.GetUserByUsername(request.Username);
             if (loginUser == null)
             {
-                return BadRequest("User not found");
+                loginUser = await _userService.GetUserByEmail(request.Username);
+                if (loginUser == null)
+                {
+                    return BadRequest("User not found or wrong password");
+                }    
             }
             user = loginUser;
             if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             {
-                return BadRequest("wrong password");
+                return BadRequest("User not found or wrong password");
             }
 
             string token = CreateToken(user);
 
             var refreshToken = GenerateRefreshToken();
-            await SetRefreshToken(refreshToken);
+            if (!await SetRefreshToken(refreshToken))
+            {
+                return BadRequest("Refresh token failed to save to DB");
+            }
+            
             var tokens = new { Token = token, RefreshToken = refreshToken, UserId = user.Id, username = user.Username, UserEmail = user.UserEmail, Role = user.Role.Name };
 
             return Ok(tokens);
@@ -120,16 +130,8 @@ namespace MessageBoardBackend.Controllers
 
         private async Task<bool> SetRefreshToken(RefreshToken newRefreshToken)
         {
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = newRefreshToken.Expires
-            };
-            Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
             user.RefreshToken = newRefreshToken;
-            await _context.SaveChangesAsync();
-            return true;
-
+            return await _userService.UpdateUser(user);
         }
 
         private string CreateToken(User user)
@@ -140,7 +142,7 @@ namespace MessageBoardBackend.Controllers
                 new Claim(ClaimTypes.Role, user.Role.Name)
             };
 
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 _configuration.GetSection("AppSettings:Token").Value));
 
             var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
@@ -154,42 +156,5 @@ namespace MessageBoardBackend.Controllers
             return jwt;
         }
 
-        private int GetRoleId(string roleName = "Poster")
-        {
-            IEnumerable<Role> roleList = _context.Role.ToList();
-            foreach (Role role in roleList)
-            {
-                if (role.Name == roleName)
-                {
-                    return role.Id;
-                }
-
-
-            }
-
-            return 0;
-        }
-
-        private async Task<User?> getUserByUsername(string username)
-        {
-            var loginUser = await _context.User.Where(s => s.Username == username).Include(t => t.Role).FirstOrDefaultAsync();
-            return loginUser;
-        }
-
-        private async Task<User?> getUserByEmail(string email)
-        {
-            var loginUser = await _context.User.Where(s => s.UserEmail == email).FirstOrDefaultAsync();
-            if (loginUser == null)
-            {
-                return null;
-            }
-            return loginUser;
-        }
-
-        private bool checkEmailValid(string email)
-        {
-            var emailAtt = new EmailAddressAttribute();
-            return emailAtt.IsValid(email);
-        }
     }
 }
