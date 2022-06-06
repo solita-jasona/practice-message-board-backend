@@ -11,6 +11,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MessageBoardBackend.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class AuthController : Controller
     {
         public static User user = new User();
