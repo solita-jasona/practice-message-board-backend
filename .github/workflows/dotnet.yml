@@ -40,7 +40,7 @@ jobs:
       uses: actions/upload-artifact@v2.2.2
       with:
         name: website
-        path: /home/runner/work/MessageBoardBackend/MessageBoardBackend/website/**
+        path: /home/runner/work/practice-message-board-backend/practice-message-board-backend/website/**
         if-no-files-found: error
         
   deploy_prod:
