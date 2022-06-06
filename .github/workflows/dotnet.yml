@@ -1,0 +1,69 @@
+name: .NET
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+env:
+  app-name: "jason-message-board-backend"
+  rg-name: "jasonali-practice-project"
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    #replace DB connection string
+    - name: App Settings Variable Substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: 'MessageBoardBackend/appsettings.json'
+      env:
+        ConnectionStrings.DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
+        AppSettings.Token: ${{ secret.JWT_TOKEN_KEY }}
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Publish
+      run: dotnet publish MessageBoardBackend/MessageBoardBackend.csproj -c Release -o website
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        name: website
+        path: /home/runner/work/MessageBoardBackend/MessageBoardBackend/website/**
+        if-no-files-found: error
+        
+  deploy_prod:
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: PROD
+      url: ${{ steps.deploywebapp.outputs.webapp-url }}
+
+    steps:
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2.0.8
+      with:
+        name: website
+        path: website
+
+    - name: Deploy web app
+      id: deploywebapp
+      uses: azure/webapps-deploy@v2
+      with:
+        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE  }}
+        app-name: ${{ env.app-name }}
+        package: website
+
+
