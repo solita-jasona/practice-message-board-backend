@@ -29,7 +29,7 @@ jobs:
         files: 'MessageBoardBackend/appsettings.json'
       env:
         ConnectionStrings.DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
-        AppSettings.Token: ${{ secret.JWT_TOKEN_KEY }}
+        AppSettings.Token: ${{ secrets.JWT_TOKEN_KEY }}
     - name: Build
       run: dotnet build --no-restore
     - name: Test
