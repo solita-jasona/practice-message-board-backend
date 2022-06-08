@@ -10,6 +10,8 @@ namespace MessageBoardBackend.Services
 		Task<bool> DeleteTopic(int id);
 
 		Task<IEnumerable<Topic>> GetAll();
+
+		Task<Topic> GetTopic(int id);
 	}
 }
 
