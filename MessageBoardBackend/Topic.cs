@@ -8,13 +8,13 @@
 
 		public int MessageCount { get; set; } = 0;
 
-		public virtual Message? LastMessage { get; set; }
-
-		public int? LastMessageId { get; set; }
+		public DateTime LastMessageTimeStamp { get; set; }
 
 		public virtual User? User { get; set; }
 
 		public int? UserId { get; set; }
+
+		public virtual List<Message>? Messages { get; set; }
 	}
 }
 
