@@ -14,6 +14,15 @@ namespace MessageBoardBackend.Data
 		public DbSet<Topic> Topic { get; set; }
 
 		public DbSet<Message> Message{ get; set; }
+
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<Message>()
+				.HasOne(p => p.Topic)
+				.WithMany(b => b.Messages)
+				.HasForeignKey(p => p.TopicId);
+		}
+
 	}
 }
 
