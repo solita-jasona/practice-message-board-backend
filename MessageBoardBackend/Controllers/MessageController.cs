@@ -9,12 +9,10 @@ namespace MessageBoardBackend.Controllers
     {
         public static Message topic = new Message();
         private readonly IMessageService _messageService;
-        private readonly ITopicService _topicService;
 
-        public MessageController(IMessageService messageService, ITopicService topicService)
+        public MessageController(IMessageService messageService)
         {
             _messageService = messageService;
-            _topicService = topicService;
         }
 
         [HttpGet("byTopic/{id}")]
