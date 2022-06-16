@@ -65,7 +65,7 @@ namespace MessageBoardBackend.Services
         {
             try
             {
-                var topic = await _context.Topic.FindAsync(message.Id);
+                var topic = await _context.Topic.FindAsync(message.TopicId);
                 topic.LastMessageTimeStamp = message.TimeStamp;
                 topic.MessageCount = await _context.Message.Where(t => t.TopicId == message.TopicId).CountAsync();
                 await _context.SaveChangesAsync();
