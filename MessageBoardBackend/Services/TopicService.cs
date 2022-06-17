@@ -30,11 +30,13 @@ namespace MessageBoardBackend.Services
         {
             try
             {
+                _context.Message.RemoveRange(_context.Message.Where(x => x.TopicId == id));
+                await _context.SaveChangesAsync();
                 var topic = await GetTopic(id);
                 if (topic == null)
                 {
                     return false;
-                }
+                } 
                 _context.Topic.Remove(topic);
                 await _context.SaveChangesAsync();
                 return true;
