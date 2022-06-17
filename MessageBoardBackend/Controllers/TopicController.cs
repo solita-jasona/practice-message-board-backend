@@ -21,6 +21,12 @@ namespace MessageBoardBackend.Controllers
             return await _topicService.GetAll();
         }
 
+        [HttpGet("single/{id}")]
+        public async Task<Topic> GetSingle(int id)
+        {
+            return await _topicService.GetTopic(id);
+        }
+
         [HttpPost("add"), Authorize()]
         public async Task<ActionResult<bool>> AddTopic(TopicDto request)
         {
@@ -59,6 +65,8 @@ namespace MessageBoardBackend.Controllers
             }
             return await _topicService.DeleteTopic(id);
         }
+
+
 
     }
 }
