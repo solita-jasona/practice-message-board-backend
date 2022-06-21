@@ -15,6 +15,8 @@ namespace MessageBoardBackend.Services
 
 		Task<bool> UpdateUser(User user);
 
-	}
+        Task<User?> GetUser(int id);
+
+    }
 }
 
