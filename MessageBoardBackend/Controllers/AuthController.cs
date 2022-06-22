@@ -123,7 +123,7 @@ namespace MessageBoardBackend.Controllers
             var refreshToken = new RefreshToken
             {
                 Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-                Expires = DateTime.Now.AddDays(7),
+                Expires = DateTime.Now.AddDays(30),
                 Created = DateTime.Now
             };
 
@@ -151,11 +151,41 @@ namespace MessageBoardBackend.Controllers
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddDays(30),
+                expires: DateTime.Now.AddDays(7),
                 signingCredentials: cred
                 );
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<string>> RefreshToken(RefreshTokenDto request)
+        {
+
+            var refreshToken = request.RefreshToken;
+            var userId = request.UserId;
+            user = await _userService.GetUser(userId);
+            if (user == null)
+            {
+                return Unauthorized("Invalid User");
+            }
+            if (!user.RefreshToken.Token.Equals(refreshToken))
+            {
+                return Unauthorized("Invalid Refresh Token");
+            }
+            else if (user.RefreshToken.Expires < DateTime.Now)
+            {
+                return Unauthorized("Token expired.");
+            }
+
+            string token = CreateToken(user);
+            var newRefreshToken = GenerateRefreshToken();
+            await SetRefreshToken(newRefreshToken);
+
+            var tokens = new { Token = token, RefreshToken = newRefreshToken, UserId = user.Id, username = user.Username, UserEmail = user.UserEmail, Role = user.Role.Name };
+
+            return Ok(tokens);
+
         }
 
     }

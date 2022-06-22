@@ -75,7 +75,7 @@ namespace MessageBoardBackend.Services
 
         public async Task<User?> GetUser(int id)
         {
-            User? user = await _context.User.Include("Role").FirstOrDefaultAsync(i => i.Id == id);
+            User? user = await _context.User.Include("Role").Include("RefreshToken").FirstOrDefaultAsync(i => i.Id == id);
             if (user == default(User))
             {
                 return null;
