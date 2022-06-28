@@ -4,6 +4,8 @@ global using MessageBoardBackend.Services;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MessageBoardBackend.Hubs;
+using Microsoft.AspNetCore.ResponseCompression;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,7 +22,12 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddSignalR();
+builder.Services.AddResponseCompression(options =>
+    options.MimeTypes = ResponseCompressionDefaults
+    .MimeTypes
+    .Concat(new[] { "application/octet-stream" })
+);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -36,7 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
 {
-    builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
 }));
 
 var app = builder.Build();
@@ -47,7 +54,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
 app.UseCors("corsapp");
+
+app.MapHub<MessageHub>("/message-hub");
 
 app.UseHttpsRedirection();
 

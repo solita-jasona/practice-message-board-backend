@@ -16,6 +16,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="6.0.6" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,9 +28,13 @@
     <None Remove="Microsoft.VisualStudio.Web.CodeGeneration.Design" />
     <None Remove="Services\" />
     <None Remove="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <None Remove="Hubs\" />
+    <None Remove="Microsoft.AspNetCore.SignalR" />
+    <None Remove="Microsoft.AspNetCore.SignalR.Client" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Services\" />
+    <Folder Include="Hubs\" />
   </ItemGroup>
 </Project>
